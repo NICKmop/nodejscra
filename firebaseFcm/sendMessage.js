@@ -6,7 +6,8 @@ const colors = require('colors');
 
 
 let serAccount = require('../firebaseFcm/dbcurd-67641-firebase-adminsdk-ax50d-d03370a8af.json');
-let checkMessage = [];
+let checkMessageArray = [];
+let duplCheck = [];
 
 admin.initializeApp({
     credential: admin.credential.cert(serAccount),
@@ -14,13 +15,21 @@ admin.initializeApp({
 })
 
 const job = schedule.scheduleJob('* * 8 * * *', function(){
-
-  checkMessage = [];
-
+  checkMessageArray = [];
 });
+
 job.cancel();
 
 exports.getData = async function (req, res){
+  // 중복 메시지 필터링
+  if(checkMessageArray.length == 0){
+    console.log("message Not exist");
+  }else{
+    let set = new Set(checkMessageArray);
+    duplCheck = [...set];
+  }
+  console.log("duplCheck : "+ duplCheck);
+
   const dbcrawlingdata = fireStore.getFirestore().collection("crawlingData").get();
   const dbuser = fireStore.getFirestore().collection("users").get();
   // 크롤링 데이터 중 오늘 날짜에 들어오는 데이터 출력
@@ -46,14 +55,15 @@ exports.getData = async function (req, res){
       const uniqueArr = [...set];
 
       // 사용자 아이디 리스트 출력.
-      fcmSendMessage(await getUserList(dbuser, uniqueArr, localArrayData), checkMessage);
-      console.log("getUserList : "+await getUserList(dbuser, uniqueArr, localArrayData));
+      await getUserList(dbuser, uniqueArr, localArrayData)
+      // fcmSendMessage(await getUserList(dbuser, uniqueArr, localArrayData), checkMessage);
+      // console.log("getUserList : "+await getUserList(dbuser, uniqueArr, localArrayData));
     });
   });
-
   return res.status(200).json(
     {success : true, message : "메시지 전달 성공"}
   )
+
 }
 // 현재 사용자 항목에서 -> 토큰 및 키워드 데이터 추출
 async function getTodayDataList(dbcrawlingdata) {
@@ -90,7 +100,6 @@ async function getTodayDataList(dbcrawlingdata) {
 async function getUserList(dbuser,localArray, localArrayData) {
   // console.log(localArray)     -> 오늘자 데이터가 있는 지역
   // console.log(localArrayData) -> 오늘자 데이터
-  let pushData = [];
   let returnData = [];
   for (let localArrayIndex = 0; localArrayIndex < localArray.length; localArrayIndex++) {
     returnData.push(await dbuser.then( (value) => {
@@ -116,22 +125,30 @@ async function getUserList(dbuser,localArray, localArrayData) {
               if(userLocal.includes(splitCenterName)){
                 // 이메일 테스트 -> 확인 필요 사항 : 중복 되서 키워드 메시지가날라가는 부분 keyword 일치하지 않는 사용 자일 경우 체크 완료 메시지가 안감
                 if(userData.usertoken != undefined){
-                  // console.log(userData.keyword);
-                  // console.log(userEmail + ": "+ userData.usertoken);
                   //임시 타이틀 박스
                   if(userData.keyword != undefined){
                     for (let userDataIndex = 0; userDataIndex < userData.keyword.length; userDataIndex++) {
                       if( localArrayData[localArrayDataIndex].title.includes(userData.keyword[userDataIndex])){
                         if(userData.keyword[userDataIndex] != ''){
+                          console.log(userEmail+ " : "+ localArrayData[localArrayDataIndex].title);
+                          // token, keyword, title, link, registrationdate, center_name,userEmail
+                          
                           let objectPushData = {
                             token : userData.usertoken,
                             keyword : userData.keyword[userDataIndex],
                             title : localArrayData[localArrayDataIndex].title,
                             link : localArrayData[localArrayDataIndex].link,
                             registrationdate : localArrayData[localArrayDataIndex].registrationdate,
-                            center_name : localArrayData[localArrayDataIndex]['center_name ']
+                            center_name : localArrayData[localArrayDataIndex]['center_name '],
+                            userEmail : userEmail
                           }
-                          pushData.push(objectPushData);
+                          
+                          if(duplCheck.includes(objectPushData.title)){
+                            console.log("messageExist : "+ objectPushData.title);
+                          }else{
+                            messageSend(objectPushData.token, objectPushData.keyword, objectPushData.title, objectPushData.link, objectPushData.registrationdate, objectPushData.center_name, objectPushData.userEmail);
+                            checkMessageArray.push(objectPushData.title);
+                          }
                         }
                       }
                     }
@@ -142,43 +159,12 @@ async function getUserList(dbuser,localArray, localArrayData) {
           }
         }
       }
-      return pushData;
     }));
   }
-  // console.log("returnData : "+ returnData[0]);
-  for (let index = 0; index < returnData[0].length; index++) {
-    const element = returnData[0][index];
-  }
-  return _.uniqBy(returnData[0], "token");
 }
 
-function fcmSendMessage(object,checkMessage){
-
-  if(isEmptyArr(checkMessage)){
-    for (let index = 0; index < object.length; index++) {
-      // console.log("object[index] : "+ object[index].link)
-
-      checkMessage.push(object[index].title);
-      // send message
-      messageSend(object[index].token, object[index].keyword, object[index].title, object[index].link, object[index].registrationdate, object[index].center_name);
-    }
-  }else {
-    // console.log("checkMessage else :"+ checkMessage);
-    for (let objectIndex = 0; objectIndex < object.length; objectIndex++) {
-      const objectElement = object[objectIndex];
-      if(checkMessage.indexOf(objectElement)){
-        console.log("message exist");
-      }else{
-        checkMessage.push(object[index].title);
-        // messageSend(object[index].token, object[index].keyword, object[index].title);
-        messageSend(object[index].token, object[index].keyword, object[index].title, object[index].link, object[index].registrationdate, object[index].center_name);
-      }
-    }
-  }
-}
-
-function messageSend(token, keyword, title, link, registrationdate, center_name) {
-  console.log("token : "+ token);
+function messageSend(token, keyword, title, link, registrationdate, center_name,userEmail) {
+  // console.log("userEmail : "+ userEmail);
   let target_token = token;
     let message = {
       notification: {
@@ -201,12 +187,4 @@ function messageSend(token, keyword, title, link, registrationdate, center_name)
     .catch(function (err) {
       console.log('메시지 전달 실패 : ', err)
     })
-}
-
-function isEmptyArr(arr)  {
-  if(Array.isArray(arr) && arr.length === 0)  {
-    return true;
-  }
-  
-  return false;
 }
