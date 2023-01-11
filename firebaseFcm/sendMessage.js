@@ -5,6 +5,7 @@ var _ = require('lodash');
 const colors = require('colors');
 
 
+
 let serAccount = require('../firebaseFcm/dbcurd-67641-firebase-adminsdk-ax50d-d03370a8af.json');
 let checkMessageArray = [];
 let duplCheck = [];
@@ -130,7 +131,9 @@ async function getUserList(dbuser,localArray, localArrayData) {
                     for (let userDataIndex = 0; userDataIndex < userData.keyword.length; userDataIndex++) {
                       if( localArrayData[localArrayDataIndex].title.includes(userData.keyword[userDataIndex])){
                         if(userData.keyword[userDataIndex] != ''){
-                          console.log(userEmail+ " : "+ localArrayData[localArrayDataIndex].title);
+                          console.log(userEmail+ " : "+ localArrayData[localArrayDataIndex].registrationdate);
+                          var date = dateFormat(localArrayData[localArrayDataIndex].registrationdate, "yyyy-mm-dd h:MM:ss");
+                          console.log("date : "+ date);
                           // token, keyword, title, link, registrationdate, center_name,userEmail
                           
                           let objectPushData = {
@@ -164,7 +167,6 @@ async function getUserList(dbuser,localArray, localArrayData) {
 }
 
 function messageSend(token, keyword, title, link, registrationdate, center_name,userEmail) {
-  // console.log("userEmail : "+ userEmail);
   let target_token = token;
     let message = {
       notification: {
@@ -173,7 +175,6 @@ function messageSend(token, keyword, title, link, registrationdate, center_name,
       },
       data : {
         link : link,
-        // registrationdate : registrationdate,
         center_name : center_name,
       },
       token: target_token,
