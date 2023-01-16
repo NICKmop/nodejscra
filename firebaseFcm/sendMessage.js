@@ -1,11 +1,8 @@
 const admin = require('firebase-admin');
 const fireStore = require('firebase-admin/firestore');
 const schedule = require('node-schedule');
-var _ = require('lodash');
 const moment = require("moment");
-
-
-
+var _ = require('lodash');
 
 let serAccount = require('../firebaseFcm/dbcurd-67641-firebase-adminsdk-ax50d-d03370a8af.json');
 let checkMessageArray = [];
@@ -63,7 +60,10 @@ exports.getData = async function (req, res){
     });
   });
   return res.status(200).json(
-    {success : true, message : "메시지 전달 성공"}
+    {
+      success : true,
+      message : "메시지 전달 성공"
+    }
   )
 
 }

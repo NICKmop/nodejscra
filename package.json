@@ -23,6 +23,7 @@
     "firebase-admin": "^11.4.1",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
-    "node-schedule": "^2.1.0"
+    "node-schedule": "^2.1.0",
+    "tracer": "^1.1.6"
   }
 }
