@@ -108,11 +108,15 @@ async function getUserList(dbuser,localArray, localArrayData) {
       for (let index = 0; index < value.docs.length; index++) {
         let userData = value.docs[index].data();
         let userEmail =value.docs[index].data()['email'];
-        let userLocal =value.docs[index].data()['local'];
-
+        let userLocal =value.docs[index].data()['alramlocal'];
+        // if(value.docs[index].data()['alramlocal'] != undefined){
+        //   console.log("userData alramlocal :"+ value.docs[index].data()['alramlocal']);
+        // }
+        // console.log(userLocal);
         if(userLocal != undefined && userLocal != ''){
           if(userLocal.includes(localArray[localArrayIndex])){
             // console.log(localArrayData.length); -> 14
+            
             for (let localArrayDataIndex = 0; localArrayDataIndex < localArrayData.length; localArrayDataIndex++) {
               let splitCenterName = '';
 
