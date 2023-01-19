@@ -13,7 +13,7 @@ admin.initializeApp({
     databaseURL: "https://dbcurd-67641-default-rtdb.firebaseio.com"
 })
 
-const job = schedule.scheduleJob('* * 8 * * *', function(){
+const job = schedule.scheduleJob('* 59 23 * * *', function(){
   checkMessageArray = [];
 });
 
@@ -27,7 +27,6 @@ exports.getData = async function (req, res){
     let set = new Set(checkMessageArray);
     duplCheck = [...set];
   }
-  console.log("duplCheck : "+ duplCheck);
 
   const dbcrawlingdata = fireStore.getFirestore().collection("crawlingData").get();
   const dbuser = fireStore.getFirestore().collection("users").get();
