@@ -17,8 +17,6 @@ const job = schedule.scheduleJob('* 59 23 * * *', function(){
   checkMessageArray = [];
 });
 
-job.cancel();
-
 exports.getData = async function (req, res){
   // 중복 메시지 필터링
   if(checkMessageArray.length == 0){
@@ -135,7 +133,7 @@ async function getUserList(dbuser,localArray, localArrayData) {
                     for (let userDataIndex = 0; userDataIndex < userData.keyword.length; userDataIndex++) {
                       if( localArrayData[localArrayDataIndex].title.includes(userData.keyword[userDataIndex])){
                         if(userData.keyword[userDataIndex] != ''){
-                          console.log(userEmail+ " : "+ localArrayData[localArrayDataIndex].registrationdate);
+                          // console.log(userEmail+ " : "+ localArrayData[localArrayDataIndex].registrationdate);
                           let date = moment(localArrayData[localArrayDataIndex].registrationdate);
                           // token, keyword, title, link, registrationdate, center_name,userEmail
                           
@@ -170,7 +168,7 @@ async function getUserList(dbuser,localArray, localArrayData) {
 }
 
 function messageSend(token, keyword, title, link, registrationdate, center_name,userEmail) {
-  console.log("registrationdate : "+ registrationdate);
+  // console.log("registrationdate : "+ registrationdate);
   let target_token = token;
     let message = {
       notification: {
